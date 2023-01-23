@@ -1,0 +1,6 @@
+/data
+/lib
+/texts
+/build.cmake/debug
+/build.cmake/release
+/bin
