@@ -12,14 +12,12 @@
 using namespace std;
 using namespace tencent::ai::texsmart;
 
-std::string get_env(std::string const &key)
-{
+std::string get_env(std::string const &key) {
   char *val = getenv(key.c_str());
   return val == NULL ? std::string("") : std::string(val);
 }
 
-std::wstring read_utf8_file(const char *filename)
-{
+std::wstring read_utf8_file(const char *filename) {
   std::wifstream wif(filename);
   wif.imbue(std::locale(wif.getloc(), new std::codecvt_utf8<wchar_t>));
   std::wstringstream wss;
@@ -27,15 +25,13 @@ std::wstring read_utf8_file(const char *filename)
   return wss.str();
 }
 
-bool extract(const string &data_dir, int worker_count, const wstring &input)
-{
+bool extract(const string &data_dir, int worker_count, const wstring &input) {
   cout << "Starting NLU engine with worker_count: " << worker_count << endl;
 
   NluEngine engine;
   bool ret = engine.Init(data_dir.c_str(), worker_count);
 
-  if (!ret)
-  {
+  if (!ret) {
     cout << "Failed to initialize the NLU engine" << endl;
     return false;
   }
@@ -71,11 +67,9 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
 
   int line_count = 0;
 
-  while (std::getline(wss, line))
-  {
+  while (std::getline(wss, line)) {
     line_count++;
-    if (line_count % 100 == 0)
-    {
+    if (line_count % 100 == 0) {
       cout << "- Parsing line: " << line_count << endl;
     }
 
@@ -85,8 +79,7 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
 
     ret = engine.ParseText(output, line.c_str(), (int)line.size(), opt);
 
-    if (!ret)
-    {
+    if (!ret) {
       cout << "Error occurred in parsing text" << endl;
       out_words.close();
       out_phrases.close();
@@ -98,8 +91,7 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
     // save word level segmentation
 
     NluTermArray term_list = output.GetWords();
-    for (uint32_t idx = 0; idx < term_list.size; idx++)
-    {
+    for (uint32_t idx = 0; idx < term_list.size; idx++) {
       const auto &term = term_list.items[idx];
 
       out_words << utf8_conv.to_bytes(term.str) << '\t';
@@ -111,8 +103,7 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
     // save phrase level segmentation
 
     term_list = output.GetPhrases();
-    for (uint32_t idx = 0; idx < term_list.size; idx++)
-    {
+    for (uint32_t idx = 0; idx < term_list.size; idx++) {
       const auto &term = term_list.items[idx];
 
       out_phrases << utf8_conv.to_bytes(term.str) << '\t';
@@ -124,8 +115,7 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
     // save entities
 
     NluEntityArray entity_list = output.GetEntities();
-    for (uint32_t idx = 0; idx < entity_list.size; idx++)
-    {
+    for (uint32_t idx = 0; idx < entity_list.size; idx++) {
       const auto &entity = entity_list.items[idx];
 
       out_entities << utf8_conv.to_bytes(entity.str);
@@ -159,20 +149,17 @@ bool extract(const string &data_dir, int worker_count, const wstring &input)
   return true;
 }
 
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
   std::string data_dir = get_env("DATA");
 
-  if (data_dir.empty())
-  {
+  if (data_dir.empty()) {
     data_dir = "./data/nlu/kb/";
   }
 
   int worker_count = 4;
   std::string workers_env = get_env("WORKERS");
 
-  if (!workers_env.empty())
-  {
+  if (!workers_env.empty()) {
     worker_count = stoi(workers_env, nullptr, 10);
   }
 
