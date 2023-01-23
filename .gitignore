@@ -1,8 +1,7 @@
 /data
 /lib
-/texts
-/build.cmake/debug
-/build.cmake/release
+/build.cmake
 /bin
 /build
 /output
+/examples
