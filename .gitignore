@@ -4,3 +4,5 @@
 /build.cmake/debug
 /build.cmake/release
 /bin
+/build
+/output

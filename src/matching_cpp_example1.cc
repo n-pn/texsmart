@@ -42,7 +42,7 @@ bool TextMatchingExample(const string &data_dir)
 
 int main(int argc, const char *argv[])
 {
-    string data_dir = "../../../../data/nlu/kb/";
+    string data_dir = "data/nlu/kb/";
     if (argc > 1) {
         data_dir = argv[1];
     }

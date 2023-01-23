@@ -103,7 +103,7 @@ bool NluExample(const char *data_dir)
 
 int main(int argc, const char *argv[])
 {
-    char data_dir[1024] = "../../../../data/nlu/kb/";
+    char data_dir[1024] = "data/nlu/kb/";
     if (argc > 1) {
         strcpy(data_dir, argv[1]);
     }
