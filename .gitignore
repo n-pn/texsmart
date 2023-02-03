@@ -1,6 +1,6 @@
 /data
-/lib
 /build.cmake
+/build.vs
 /bin
 /build
 /output
