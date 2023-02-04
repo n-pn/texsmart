@@ -42,9 +42,12 @@ class Texsmart
     output = LibTexSmart.parse_utf8_text(@engine, input.to_slice, input.bytesize)
 
     words = get_words(output)
+    phrases = get_phrases(output)
+    entities = get_entities(output)
+
     LibTexSmart.destroy_output(output)
 
-    words
+    {words, phrases, entities}
   end
 
   private def get_words(output : LibTexSmart::NluOutputHandle)
@@ -57,6 +60,49 @@ class Texsmart
         idx: word.offset,
         tag: read_str(word.tag),
         freq: word.freq
+      )
+    end
+  end
+
+  private def get_phrases(output : LibTexSmart::NluOutputHandle)
+    phrases = LibTexSmart.get_phrases(output)
+    slice = Slice(LibTexSmart::NluTerm).new(phrases.items, phrases.size)
+
+    slice.map do |phrase|
+      Term.new(
+        str: read_str(phrase.str),
+        idx: phrase.offset,
+        tag: read_str(phrase.tag),
+        freq: phrase.freq
+      )
+    end
+  end
+
+  struct Entity
+    getter str : String
+    getter idx : UInt32
+    getter type : String
+
+    getter alt_types : Slice(String)
+    getter meaning : String
+
+    def initialize(@str, @idx, @type, @alt_types, @meaning)
+    end
+  end
+
+  private def get_entities(output : LibTexSmart::NluOutputHandle)
+    entities = LibTexSmart.get_entities(output)
+    slice = Slice(LibTexSmart::NluEntity).new(entities.items, entities.size)
+
+    slice.map do |entity|
+      alt_types = Slice(LibTexSmart::NluEntityType).new(entity.alt_types.items, entity.alt_types.size)
+
+      Entity.new(
+        str: read_str(entity.str),
+        idx: entity.offset,
+        type: read_str(entity.type.name),
+        alt_types: alt_types.map { |x| read_str(x.name) },
+        meaning: read_str(entity.meaning)
       )
     end
   end
@@ -76,6 +122,3 @@ class Texsmart
     end
   end
 end
-
-engine = Texsmart.new
-puts engine.parse("上个月30号，南昌王先生在自己家里边看流浪地球边吃煲仔饭。")
