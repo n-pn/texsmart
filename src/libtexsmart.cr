@@ -1,5 +1,5 @@
 {% if flag?(:win32) %}
-  @[Link(ldflags: "-I./include -L./lib -ltencent_ai_texsmart")]
+  @[Link(ldflags: "#{__DIR__}/../lib/tencent_ai_texsmart.lib")]
 {% else %}
   @[Link(ldflags: "-I./include -L./lib -ltencent_ai_texsmart -Wl,-rpath='$ORIGIN/lib'")]
 {% end %}
