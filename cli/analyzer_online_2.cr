@@ -48,7 +48,7 @@ class Analyzer
     puts "- Thuật toán nhận dạng: #{ner_alg.colorize.yellow}"
 
     puts "- Số ký tự tối đa gửi api: #{max_chars.colorize.yellow} từ/lượt gửi"
-    puts "- Giới hạn lượt gọi api: #{max_chars.colorize.yellow} giây/lượt gửi"
+    puts "- Giới hạn lượt gọi api: #{req_delay.colorize.yellow} giây/lượt gửi"
   end
 
   API = "https://texsmart.qq.com/api"
@@ -274,7 +274,7 @@ if inp_file.empty?
   end
 end
 
-max_chars = 8000 if max_chars < 8000
+max_chars = 7500 if max_chars > 7500
 req_delay = 0 if req_delay < 0
 
 analyzer = Analyzer.new(pos_alg, ner_alg, max_chars: max_chars, req_delay: req_delay)
