@@ -73,7 +73,7 @@ class Analyzer
 
   API = "https://texsmart.qq.com/api"
 
-  def call_api(input : Array(String))
+  def call_api(input : Array(String), delay = 1)
     json = {
       str: input,
 
@@ -87,15 +87,19 @@ class Analyzer
       },
     }
 
-    output = HTTP::Client.post(API, tls: @tls, body: json.to_json) do |res|
+    HTTP::Client.post(API, tls: @tls, body: json.to_json) do |res|
       body = res.body_io.gets_to_end
-      break body if res.status.success? && !body.empty?
 
-      puts "Lỗi: #{body}".colorize.red
-      exit 1
+      if !res.status.success? || body.empty?
+        raise body.empty? ? "API không trả về kết quả" : body
+      end
+
+      FullJsonData.from_json(body).res_list
     end
-
-    FullJsonData.from_json(output).res_list
+  rescue ex
+    puts "Lỗi gọi API: #{ex.message}, chương trình sẽ tự động thử lại sau #{delay * 10} giây".colorize.red
+    sleep delay * 10
+    call_api(input, delay * 2)
   end
 
   private def write_terms(file : File, terms : Enumerable(JsonData::Term))
