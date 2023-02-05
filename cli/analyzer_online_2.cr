@@ -49,10 +49,29 @@ class Analyzer
 
     puts "- Số ký tự tối đa gửi api: #{max_chars.colorize.yellow} từ/lượt gửi"
     puts "- Giới hạn lượt gọi api: #{req_delay.colorize.yellow} giây/lượt gửi"
+
+    @tls = OpenSSL::SSL::Context::Client.new
+
+    {% if flag?(:win32) %}
+      ca_file = "C:/Program Files/Common Files/SSL/cacert.pem"
+      download_cacert(ca_file) unless File.file?(ca_file)
+      @tls.ca_certificates = ca_file
+    {% end %}
+  end
+
+  private def download_cacert(out_file : String)
+    url = "https://curl.se/ca/cacert-2023-01-10.pem"
+    tls = OpenSSL::SSL::Context::Client.insecure
+
+    HTTP::Client.get(url, tls: tls) do |res|
+      Dir.mkdir_p(File.dirname(out_file))
+      File.write(out_file, res.body_io)
+    end
+
+    raise "Không tải được file cacert, hãy liên hệ ban quản trị" unless File.file?(out_file)
   end
 
   API = "https://texsmart.qq.com/api"
-  TLS = OpenSSL::SSL::Context::Client.insecure
 
   def call_api(input : Array(String))
     json = {
@@ -68,11 +87,11 @@ class Analyzer
       },
     }
 
-    output = HTTP::Client.post(API, tls: TLS, body: json.to_json) do |res|
+    output = HTTP::Client.post(API, tls: @tls, body: json.to_json) do |res|
       body = res.body_io.gets_to_end
-      break body if res.status.success?
+      break body if res.status.success? && !body.empty?
 
-      puts body.colorize.red
+      puts "Lỗi: #{body}".colorize.red
       exit 1
     end
 
@@ -112,9 +131,6 @@ class Analyzer
   def analyze_part(lines : Array(String), path : String, label = "-/-")
     puts "- <#{label}> tệp #{path.colorize.cyan}, số dòng: #{lines.size.colorize.cyan}"
 
-    out_path = path.sub(".txt", ".output.tsv")
-    return if File.file?(out_path)
-
     File.write(path, lines.join("\n"))
 
     word_lists = [] of Array(JsonData::Term)
@@ -149,6 +165,7 @@ class Analyzer
       entity_lists.each { |list| write_entities(file, list) }
     end
 
+    out_path = path.sub(".txt", ".output.tsv")
     save_output(out_path, out_data)
   end
 
@@ -180,6 +197,9 @@ class Analyzer
       next if char_count < @max_chars
 
       part_count += 1
+
+      res_path = File.join(out_dir, "#{part_count}.output.tsv")
+      next if File.file?(res_path)
 
       out_path = File.join(out_dir, "#{part_count}.txt")
       analyze_part(part_lines, out_path, "#{line_count}/#{lines.size}")
@@ -237,7 +257,7 @@ end
 inp_file = ""
 encoding = "UTF-8"
 
-pos_alg = "DNN"
+pos_alg = "CRF"
 ner_alg = "fine.high_acc"
 
 max_chars = ENV["MAX"]?.try(&.to_i?) || 5000
