@@ -70,11 +70,11 @@ def analyze_file(engine, file : String, encoding = "UTF-8")
   output = output.map { |k, v| {k, v, -v.sum(&.[1])} }.sort_by!(&.[2])
 
   out_file = file.sub(ext, ".output.tsv")
-  File.open(out_file, "w") do |file|
+  File.open(out_file, "w") do |fileio|
     output.each do |k, v, _|
-      file << k << '\t'
-      v.to_a.sort_by(&.[1].-).join(file, '\t') { |(x, y), io| io << x << ':' << y }
-      file << '\n'
+      fileio << k << '\t'
+      v.to_a.sort_by(&.[1].-).join(fileio, '\t') { |(x, y), io| io << x << ':' << y }
+      fileio << '\n'
     end
   end
 

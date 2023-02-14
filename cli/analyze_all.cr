@@ -3,6 +3,9 @@ require "../src/texsmart"
 LIMIT   = ENV["LIMIT"]?.try(&.to_i) || 256
 WORKERS = ENV["WORKERS"]?.try(&.to_i?) || 4
 
+MOD = ENV["MOD"]?.try(&.to_i) || 1
+REM = ENV["REM"]?.try(&.to_i) || 0
+
 puts "Starting NLU engine with worker_count: #{WORKERS}"
 ENGINE = Texsmart.new(worker_count: WORKERS)
 
@@ -74,7 +77,7 @@ end
 #   analyze_glob(glob)
 # end
 
-def analyze_seed(seed : String, limit = 256)
+def analyze_seed(seed : String, limit = 256, mod = 1, rem = 0)
   s_dir = "#{INP_DIR}/#{seed}"
   b_ids = Dir.children(s_dir).map(&.to_i).sort!
 
@@ -90,7 +93,7 @@ def analyze_seed(seed : String, limit = 256)
 
     puts "- extract #{seed}/#{s_bid}: #{files.size} files"
     time = Time.measure do
-      files.each { |file| analyze_file(file) }
+      files.each_with_index { |file, i| analyze_file(file) if i % mod == rem }
     end
 
     puts " done in: #{time.total_seconds.round(2)} seconds"
@@ -99,5 +102,5 @@ end
 
 ARGV.each do |seed|
   next if seed.starts_with?('-')
-  analyze_seed(seed, limit: LIMIT)
+  analyze_seed(seed, limit: LIMIT, mod: MOD, rem: REM)
 end
