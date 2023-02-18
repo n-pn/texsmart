@@ -100,9 +100,9 @@ def analyze_book(idx_path : String) : Nil
   puts "Done in: #{tdiff.total_seconds.round(2)} seconds".colorize.cyan
 end
 
-INP_DIR = "/app/chivi/var/cvmtl/index"
 TXT_DIR = "/app/chivi/var/texts/rgbks"
-OUT_DIR = "/app/chivi/var/texts/anlzs"
+INP_DIR = "/app/chivi/var/texts/anlzs/idx"
+OUT_DIR = "/app/chivi/var/texts/anlzs/tmp"
 
 mod = ENV["MOD"]?.try(&.to_i) || 1
 rem = ENV["REM"]?.try(&.to_i) || 0
