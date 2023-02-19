@@ -16,11 +16,18 @@ def write_terms(file : File, terms : Enumerable(Texsmart::Term))
   file << '\n'
 end
 
+KNOWNS = File.read_lines("/app/chivi/var/texts/anlzs/known_entities.tsv").to_set
+
 def write_entities(file : File, entities : Enumerable(Texsmart::Entity))
   entities.each do |entity|
-    file << entity.str << '\t' << entity.idx << '\t' << entity.type
-    file << '\t' << entity.alt_types.join('|')
-    file << '\t' << entity.meaning << '\n'
+    file << entity.str << '\t' << entity.idx << '\t' << entity.type << '\n'
+
+    line = "#{entity.str}\t#{entity.type}"
+
+    next if KNOWNS.includes?(line) || entity.meaning.empty?
+
+    KNOWNS << line
+    File.open(ENTITY_MEANING, "a", &.puts("#{line}\t#{entity.meaning}"))
   end
 
   file << '\n'
@@ -32,7 +39,7 @@ def analyze_file(inp_file : String, out_base : String)
 
   words_path = "#{out_base}.word_log[M].tsv"
   phrases_path = "#{out_base}.phrase_log[M].tsv"
-  entities_path = "#{out_base}.entity_fine[M].tsv"
+  entities_path = "#{out_base}.entity_fine[M].ner"
 
   inp_base = File.basename(inp_file)
 
@@ -63,7 +70,7 @@ def analyze_file(inp_file : String, out_base : String)
   {c_len, Time.utc.to_unix}
 end
 
-def analyze_book(idx_path : String) : Nil
+def analyze_book(idx_path : String, lbl : String = "1/1") : Nil
   out_dir = "#{OUT_DIR}/#{File.basename(idx_path, ".tsv")}"
   Dir.mkdir_p(out_dir)
 
@@ -75,7 +82,7 @@ def analyze_book(idx_path : String) : Nil
     input[ch_no] = rows
   end
 
-  puts "- analyzing #{out_dir}, entries: #{input.size}".colorize.yellow
+  puts "-<#{lbl}> analyzing #{out_dir}, entries: #{input.size}".colorize.yellow
 
   start = Time.monotonic
 
@@ -104,18 +111,20 @@ TXT_DIR = "/app/chivi/var/texts/rgbks"
 INP_DIR = "/app/chivi/var/texts/anlzs/idx"
 OUT_DIR = "/app/chivi/var/texts/anlzs/tmp"
 
-mod = ENV["MOD"]?.try(&.to_i) || 1
-rem = ENV["REM"]?.try(&.to_i) || 0
+MOD = ENV["MOD"]?.try(&.to_i) || 1
+REM = ENV["REM"]?.try(&.to_i) || 0
+
+ENTITY_MEANING = "#{OUT_DIR}/../sum/entity-meaning-#{MOD}-#{REM}.tsv"
 
 files = Dir.glob("#{INP_DIR}/*.tsv").map do |file|
   {file, File.basename(file).split('-', 2).first.to_i}
 end
 
-files = files.select! { |_, id| id % mod == rem } if mod > 1
+files = files.select! { |_, id| id % MOD == REM } if MOD > 1
 files.sort_by!(&.[1])
 
 puts "input: #{files.size}"
 
-files.each do |file, _|
-  analyze_book(file)
+files.each_with_index(1) do |(file, _), idx|
+  analyze_book(file, "#{idx}/#{files.size}")
 end
