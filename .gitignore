@@ -1,9 +1,8 @@
-/data
 /build.cmake
 /build.vs
 /bin
 /build
-/output
-/examples
 /tmp
 /run
+/test
+/out
