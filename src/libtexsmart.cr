@@ -1,7 +1,7 @@
 {% if flag?(:win32) %}
   @[Link(ldflags: "#{__DIR__}/../lib/tencent_ai_texsmart.lib")]
 {% else %}
-  @[Link(ldflags: "-I./include -L./lib -ltencent_ai_texsmart -Wl,-rpath='$ORIGIN/lib'")]
+  @[Link(ldflags: "-I./include -L./lib -ltencent_ai_texsmart -Wl,-rpath='/srv/qq_ts/lib'")]
 {% end %}
 lib LibTexSmart
   alias CStr = LibC::Char*
@@ -73,7 +73,6 @@ lib LibTexSmart
     fnr : FnrOptions
     srl : SrlOptions
     syntactic_parsing : SyntacticParsingOptions
-
     enable_additional_rule : Bool
   end
 
